@@ -1,0 +1,245 @@
+{
+  "form_name": "Daily Crew Leader Report",
+  "version": "1.0",
+  "language": "zh-CN",
+  "description": "每日领队工作总结问卷，用于记录基础信息、每日完成情况、员工出勤、Rough-in 与全部安装完成进度。",
+  "sections": [
+    {
+      "id": "basic_info",
+      "title": "基础信息",
+      "fields": [
+        {
+          "id": "work_date",
+          "label": "日期",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "work_address",
+          "label": "工作地址 / 项目",
+          "type": "dropdown",
+          "required": true,
+          "options_source": "project_list"
+        },
+        {
+          "id": "crew_leader_name",
+          "label": "领队姓名",
+          "type": "dropdown",
+          "required": true,
+          "options_source": "crew_leader_list"
+        },
+        {
+          "id": "panels_installed_today",
+          "label": "今日安装太阳能板数量",
+          "type": "number",
+          "required": true,
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": "daily_completion",
+      "title": "今日施工计划完成情况",
+      "fields": [
+        {
+          "id": "daily_plan_completed",
+          "label": "是否完成今日施工计划",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "id": "daily_plan_incomplete_reason",
+          "label": "未完成原因",
+          "type": "dropdown",
+          "required": true,
+          "show_if": {
+            "field_id": "daily_plan_completed",
+            "equals": "No"
+          },
+          "options": [
+            "天气",
+            "材料短缺",
+            "设计问题",
+            "客户原因",
+            "人员不足",
+            "设备问题",
+            "其他"
+          ]
+        },
+        {
+          "id": "daily_plan_incomplete_other_reason",
+          "label": "其他原因说明",
+          "type": "textarea",
+          "required": true,
+          "show_if": {
+            "field_id": "daily_plan_incomplete_reason",
+            "equals": "其他"
+          }
+        }
+      ]
+    },
+    {
+      "id": "attendance",
+      "title": "员工出勤情况",
+      "type": "repeatable_group",
+      "description": "每位出勤员工填写一条记录。",
+      "fields": [
+        {
+          "id": "employee_name",
+          "label": "出勤员工",
+          "type": "dropdown",
+          "required": true,
+          "options_source": "employee_list"
+        },
+        {
+          "id": "arrival_time",
+          "label": "到达时间",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "departure_time",
+          "label": "离开时间",
+          "type": "time",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "milestones",
+      "title": "施工阶段进度",
+      "type": "milestone_group",
+      "milestones": [
+        {
+          "id": "rough_in",
+          "title": "Rough-in",
+          "fields": [
+            {
+              "id": "rough_in_estimated_completion_time",
+              "label": "预计完成 Rough-in 时间",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "rough_in_actual_completion_time",
+              "label": "实际完成 Rough-in 时间",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "rough_in_completed_as_expected",
+              "label": "Rough-in 是否按预期完成",
+              "type": "radio",
+              "required": true,
+              "options": [
+                "Yes",
+                "No"
+              ]
+            },
+            {
+              "id": "rough_in_delay_reason",
+              "label": "Rough-in 未按预期完成原因",
+              "type": "dropdown",
+              "required": true,
+              "show_if": {
+                "field_id": "rough_in_completed_as_expected",
+                "equals": "No"
+              },
+              "options": [
+                "天气",
+                "材料短缺",
+                "设计问题",
+                "客户原因",
+                "人员不足",
+                "设备问题",
+                "其他"
+              ]
+            },
+            {
+              "id": "rough_in_delay_other_reason",
+              "label": "Rough-in 其他原因说明",
+              "type": "textarea",
+              "required": true,
+              "show_if": {
+                "field_id": "rough_in_delay_reason",
+                "equals": "其他"
+              }
+            }
+          ]
+        },
+        {
+          "id": "final_installation",
+          "title": "全部安装完成",
+          "fields": [
+            {
+              "id": "final_installation_estimated_completion_time",
+              "label": "预计全部完成安装时间",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "final_installation_actual_completion_time",
+              "label": "实际全部完成安装时间",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "final_installation_completed_as_expected",
+              "label": "全部安装是否按预期完成",
+              "type": "radio",
+              "required": true,
+              "options": [
+                "Yes",
+                "No"
+              ]
+            },
+            {
+              "id": "final_installation_delay_reason",
+              "label": "全部安装未按预期完成原因",
+              "type": "dropdown",
+              "required": true,
+              "show_if": {
+                "field_id": "final_installation_completed_as_expected",
+                "equals": "No"
+              },
+              "options": [
+                "天气",
+                "材料短缺",
+                "设计问题",
+                "客户原因",
+                "人员不足",
+                "设备问题",
+                "其他"
+              ]
+            },
+            {
+              "id": "final_installation_delay_other_reason",
+              "label": "全部安装其他原因说明",
+              "type": "textarea",
+              "required": true,
+              "show_if": {
+                "field_id": "final_installation_delay_reason",
+                "equals": "其他"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "external_option_sources": {
+    "project_list": {
+      "description": "项目 / 工作地址下拉列表，由系统后台维护。"
+    },
+    "crew_leader_list": {
+      "description": "领队姓名下拉列表，由系统后台维护。"
+    },
+    "employee_list": {
+      "description": "员工姓名下拉列表，由系统后台维护。"
+    }
+  }
+}

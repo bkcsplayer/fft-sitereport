@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-dark-950 text-white antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-700/50 rounded-full;
+  }
+
+  /* Prevent iOS zoom on input focus — 16px minimum */
+  input, select, textarea {
+    font-size: 16px;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    touch-action: manipulation;
+  }
+
+  /* Fix date/time inputs on mobile Safari/Chrome */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Ensure grid/flex children don't overflow */
+  .grid > *,
+  .flex > * {
+    min-width: 0;
+  }
+}
+
+@layer components {
+  /* Glass card with depth */
+  .glass-card {
+    @apply bg-dark-800/50 backdrop-blur-2xl border border-dark-700/40 rounded-2xl;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow-x: hidden;
+  }
+
+  .glass-card-strong {
+    @apply bg-dark-800/70 backdrop-blur-2xl border border-dark-600/50 rounded-2xl;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Glow border effect */
+  .glow-border {
+    @apply border border-primary-500/30 shadow-[0_0_20px_rgba(51,145,255,0.12)];
+  }
+
+  /* Input field — mobile touch optimized (min 48px height) */
+  .input-field {
+    @apply w-full bg-dark-900/70 border border-dark-600/40 rounded-xl px-4 py-3 text-white text-[16px]
+           placeholder-dark-500 focus:outline-none focus:border-primary-500/50 focus:shadow-[0_0_12px_rgba(51,145,255,0.08)]
+           transition-all duration-200;
+    min-height: 48px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Select dropdown — custom arrow via SVG */
+  select.input-field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23787e89' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+  }
+
+  /* Primary button — min 52px (accessible touch) */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold
+           px-6 py-3.5 rounded-xl hover:from-primary-500 hover:to-primary-400
+           active:scale-[0.97] transition-all duration-150 shadow-lg shadow-primary-600/25
+           cursor-pointer;
+    min-height: 52px;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-dark-700/70 border border-dark-600/40 text-dark-200 font-medium
+           px-6 py-3.5 rounded-xl hover:bg-dark-600/70 hover:border-dark-500/50
+           active:scale-[0.97] transition-all duration-150 cursor-pointer;
+    min-height: 48px;
+  }
+
+  /* Touch-friendly action button */
+  .btn-action {
+    @apply flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+           bg-dark-800/70 border border-dark-600/40 text-dark-200
+           hover:bg-dark-700/70 hover:border-dark-500/50
+           active:scale-[0.97] active:bg-dark-600/70
+           transition-all duration-150 cursor-pointer;
+    min-height: 48px;
+  }
+
+  /* Section header style */
+  .section-header {
+    @apply text-sm font-semibold text-dark-100 flex items-center gap-2 tracking-wide;
+  }
+
+  /* Card hover lift effect */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+  .card-hover:active {
+    @apply scale-[0.99];
+    background-color: rgba(26, 29, 36, 0.7);
+  }
+
+  /* Bottom safe area for fixed nav */
+  .pb-safe {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  /* Status dot pulse animation */
+  .status-dot-pulse {
+    animation: statusPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Recording pulse */
+  .recording-pulse {
+    animation: recordingPulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes recordingPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.8; }
+  }
+
+  /* Skeleton shimmer */
+  .shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

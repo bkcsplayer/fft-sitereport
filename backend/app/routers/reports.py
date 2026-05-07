@@ -56,7 +56,11 @@ async def create_report(data: ReportCreate, db: AsyncSession = Depends(get_db)):
 
     result = await db.execute(
         select(Report)
-        .options(selectinload(Report.attendance_records), selectinload(Report.milestones))
+        .options(
+            selectinload(Report.attendance_records),
+            selectinload(Report.milestones),
+            selectinload(Report.voice_recordings).selectinload(VoiceRecording.transcript),
+        )
         .where(Report.id == report.id)
     )
     report = result.scalar_one()

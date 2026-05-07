@@ -87,6 +87,14 @@ class VoiceRecording(Base):
     report: Mapped["Report | None"] = relationship(back_populates="voice_recordings")
     transcript: Mapped["VoiceTranscript | None"] = relationship(back_populates="recording", uselist=False, cascade="all, delete-orphan")
 
+    @property
+    def transcript_raw(self) -> str | None:
+        return self.transcript.raw_text if self.transcript else None
+
+    @property
+    def transcript_processed(self) -> str | None:
+        return self.transcript.processed_text if self.transcript else None
+
 
 class VoiceTranscript(Base):
     __tablename__ = "voice_transcripts"

@@ -35,7 +35,7 @@ export function ReportDetailModal({ reportId, onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -62,7 +62,7 @@ export function ReportDetailModal({ reportId, onClose }: Props) {
           </div>
         </div>
 
-        <div className="px-5 py-4 space-y-4 pb-8">
+        <div className="px-5 py-4 space-y-4 pb-32">
           {loading ? (
             <div className="flex justify-center py-14">
               <div className="w-8 h-8 border-[2.5px] border-primary-500/20 border-t-primary-400 rounded-full animate-spin" />

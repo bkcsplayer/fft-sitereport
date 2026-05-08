@@ -2,10 +2,16 @@
 # FFT SiteReport Health Check Script
 # Runs via cron, sends results to Telegram
 
-TELEGRAM_BOT_TOKEN="TELEGRAM_BOT_TOKEN_PLACEHOLDER"
-TELEGRAM_CHAT_ID="TELEGRAM_CHAT_ID_PLACEHOLDER"
-DOMAIN="https://sitereport.khtain.com"
 COMPOSE_DIR="/www/wwwroot/sitereport.khtain.com"
+DOMAIN="https://sitereport.khtain.com"
+
+# Load from .env file if exists
+if [ -f "$COMPOSE_DIR/.env" ]; then
+    export $(grep -v '^#' "$COMPOSE_DIR/.env" | xargs)
+fi
+
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
 
 ERRORS=""
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S %Z')

@@ -51,6 +51,7 @@ export interface ReportDetail extends ReportListItem {
   daily_plan_incomplete_other_reason: string | null;
   summary: string | null;
   updated_at: string;
+  video_nas_path: string | null;
   attendance_records: {
     id: string;
     employee_name: string;
@@ -82,6 +83,18 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    return res.json();
+  },
+
+  async uploadVideo(videoFile: File, workAddress: string): Promise<{ nas_path: string }> {
+    const formData = new FormData();
+    formData.append("video", videoFile, "capture.mp4");
+    formData.append("work_address", workAddress);
+    const res = await fetch(`${BASE_URL}/video/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) throw new Error("Upload failed");
     return res.json();
   },
 

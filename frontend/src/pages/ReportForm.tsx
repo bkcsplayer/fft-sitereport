@@ -10,10 +10,12 @@ import {
   Clock,
   CheckCircle2,
   Send,
+  Video,
   Mic,
   ChevronDown,
 } from "lucide-react";
 import { VoiceRecorder } from "../components/VoiceRecorder";
+import { VideoRecorder } from "../components/VideoRecorder";
 import { PageHeader } from "../components/PageHeader";
 import { api, DropdownOption } from "../services/api";
 import { useI18n } from "../i18n";
@@ -83,6 +85,7 @@ export function ReportForm() {
 
   const [voiceNote, setVoiceNote] = useState("");
   const [voiceRecordingIds, setVoiceRecordingIds] = useState<string[]>([]);
+  const [videoNasPath, setVideoNasPath] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -144,6 +147,7 @@ export function ReportForm() {
           delay_other_reason: m.delay_reason === "其他" ? m.delay_other_reason : null,
         })),
       voice_recording_ids: voiceRecordingIds,
+      video_nas_path: videoNasPath,
     };
 
     try {
@@ -172,6 +176,7 @@ export function ReportForm() {
     ]);
     setVoiceNote("");
     setVoiceRecordingIds([]);
+    setVideoNasPath(null);
   };
 
   const sectionVariants = {
@@ -187,7 +192,7 @@ export function ReportForm() {
     <div className="px-4 py-6 space-y-5 w-full max-w-full overflow-hidden">
       <PageHeader title={t("report.title")} subtitle={t("report.subtitle")} />
 
-      {/* Voice Input Section */}
+      {/* Video Input Section */}
       <motion.section
         custom={0}
         initial="hidden"
@@ -197,29 +202,15 @@ export function ReportForm() {
       >
         <h2 className="section-header">
           <div className="w-7 h-7 rounded-lg bg-primary-600/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
-            <Mic size={15} className="text-primary-400" />
+            <Video size={15} className="text-primary-400" />
           </div>
-          {t("voice.title")}
+          {t("video.title")}
         </h2>
-        <VoiceRecorder
-          fieldId="daily_summary"
-          onTranscribed={(text, recId) => {
-            setVoiceNote(text);
-            setVoiceRecordingIds((ids) => [...ids, recId]);
-          }}
+        <VideoRecorder
+          workAddress={workAddress}
+          onVideoUploaded={(path) => setVideoNasPath(path)}
+          onClear={() => setVideoNasPath(null)}
         />
-        <AnimatePresence>
-          {voiceNote && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-dark-900/50 rounded-xl p-3.5 text-sm text-dark-200 border border-dark-700/30 leading-relaxed break-words"
-            >
-              {voiceNote}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.section>
 
       {/* Basic Info */}
@@ -584,9 +575,44 @@ export function ReportForm() {
         </div>
       </motion.section>
 
+      {/* Voice Input Section */}
+      <motion.section
+        custom={5}
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        className="glass-card p-4 space-y-3"
+      >
+        <h2 className="section-header">
+          <div className="w-7 h-7 rounded-lg bg-primary-600/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
+            <Mic size={15} className="text-primary-400" />
+          </div>
+          {t("voice.title")}
+        </h2>
+        <VoiceRecorder
+          fieldId="daily_summary"
+          onTranscribed={(text, recId) => {
+            setVoiceNote(text);
+            setVoiceRecordingIds((ids) => [...ids, recId]);
+          }}
+        />
+        <AnimatePresence>
+          {voiceNote && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-dark-900/50 rounded-xl p-3.5 text-sm text-dark-200 border border-dark-700/30 leading-relaxed break-words"
+            >
+              {voiceNote}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.section>
+
       {/* Submit */}
       <motion.div
-        custom={5}
+        custom={6}
         initial="hidden"
         animate="visible"
         variants={sectionVariants}

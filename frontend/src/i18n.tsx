@@ -30,6 +30,14 @@ const translations = {
   "voice.confirmUpload": { zh: "确认上传", en: "Upload" },
   "voice.micError": { zh: "无法访问麦克风，请检查权限设置", en: "Cannot access microphone. Check permissions." },
 
+  "video.title": { zh: "现场视频", en: "Site Video" },
+  "video.tap": { zh: "拍摄现场视频", en: "Record site video" },
+  "video.reShoot": { zh: "重新拍摄", en: "Re-shoot" },
+  "video.confirm": { zh: "确认视频", en: "Confirm" },
+  "video.uploading": { zh: "正在上传视频...", en: "Uploading video..." },
+  "video.done": { zh: "视频已上传", en: "Video uploaded" },
+  "video.error": { zh: "视频上传失败，请重试", en: "Video upload failed. Please retry." },
+
   "basic.title": { zh: "基础信息", en: "Basic Info" },
   "basic.date": { zh: "日期", en: "Date" },
   "basic.address": { zh: "工作地址 / 项目 *", en: "Work Address / Project *" },
@@ -140,6 +148,8 @@ const translations = {
   "detail.rawText": { zh: "语音原文", en: "Raw Transcript" },
   "detail.processedText": { zh: "整理后文字", en: "Processed Text" },
   "detail.noRecordings": { zh: "暂无语音记录", en: "No voice recordings" },
+  "detail.video": { zh: "现场视频", en: "Site Video" },
+  "detail.noVideo": { zh: "暂无视频", en: "No video" },
   "detail.close": { zh: "关闭", en: "Close" },
   "detail.yes": { zh: "是", en: "Yes" },
   "detail.no": { zh: "否", en: "No" },

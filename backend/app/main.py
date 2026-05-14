@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routers import reports, voice, admin, options, auth
+from app.routers import reports, voice, admin, options, auth, video
 
 
 @asynccontextmanager
@@ -27,6 +27,7 @@ app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 app.include_router(voice.router, prefix="/api/voice", tags=["voice"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(options.router, prefix="/api/options", tags=["options"])
+app.include_router(video.router, prefix="/api/video", tags=["video"])
 
 
 @app.get("/api/health")

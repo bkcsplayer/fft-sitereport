@@ -36,6 +36,7 @@ class Report(Base):
 
     status: Mapped[str] = mapped_column(String(20), default=ReportStatus.DRAFT.value)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    video_nas_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

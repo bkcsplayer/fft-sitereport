@@ -22,6 +22,7 @@ async def create_report(data: ReportCreate, db: AsyncSession = Depends(get_db)):
         daily_plan_completed=data.daily_plan_completed,
         daily_plan_incomplete_reason=data.daily_plan_incomplete_reason,
         daily_plan_incomplete_other_reason=data.daily_plan_incomplete_other_reason,
+        video_nas_path=data.video_nas_path,
         status=ReportStatus.COMPLETED.value,
     )
 

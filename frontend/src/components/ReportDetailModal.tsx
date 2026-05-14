@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, User, Layers, Calendar, Clock, Mic, ChevronDown } from "lucide-react";
+import { X, MapPin, User, Layers, Calendar, Clock, Mic, ChevronDown, Video } from "lucide-react";
 import { api, ReportDetail, VoiceRecordingInfo } from "../services/api";
 import { StatusBadge } from "./StatusBadge";
 import { useI18n } from "../i18n";
@@ -163,6 +163,20 @@ export function ReportDetailModal({ reportId, onClose }: Props) {
                       />
                     ))}
                   </div>
+                )}
+              </Section>
+
+              {/* Video */}
+              <Section title={t("detail.video")}>
+                {report.video_nas_path ? (
+                  <div className="bg-dark-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-primary-600/8 border border-primary-500/15 flex items-center justify-center flex-shrink-0">
+                      <Video size={14} className="text-primary-400" />
+                    </div>
+                    <span className="text-xs text-dark-300 font-medium truncate">{report.video_nas_path}</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-dark-600 py-1">{t("detail.noVideo")}</p>
                 )}
               </Section>
             </>

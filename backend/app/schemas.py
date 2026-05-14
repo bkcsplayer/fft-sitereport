@@ -68,6 +68,7 @@ class ReportCreate(BaseModel):
     attendance_records: list[AttendanceRecordCreate] = []
     milestones: list[MilestoneCreate] = []
     voice_recording_ids: list[UUID] = []
+    video_nas_path: Optional[str] = None
 
 
 class ReportResponse(BaseModel):
@@ -86,6 +87,7 @@ class ReportResponse(BaseModel):
     attendance_records: list[AttendanceRecordResponse] = []
     milestones: list[MilestoneResponse] = []
     voice_recordings: list[VoiceRecordingResponse] = []
+    video_nas_path: Optional[str] = None
 
     class Config:
         from_attributes = True

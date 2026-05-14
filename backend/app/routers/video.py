@@ -3,13 +3,13 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
 from app.config import settings
-from app.services.nas_service import upload_video, generate_video_filename
+from app.services.nas_service import upload_video as upload_to_nas, generate_video_filename
 
 router = APIRouter()
 
 
 @router.post("/upload")
-async def upload_video(
+async def upload_video_endpoint(
     video: UploadFile = File(...),
     work_address: str = Form(...),
 ):
@@ -28,7 +28,7 @@ async def upload_video(
             f.write(content)
 
         filename = generate_video_filename(work_address)
-        nas_path = await upload_video(tmp_path, filename)
+        nas_path = await upload_to_nas(tmp_path, filename)
 
         return {"nas_path": nas_path}
 

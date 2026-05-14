@@ -25,6 +25,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fft}:${POSTGRES_PASSWORD:-fft_secret}@postgres:5432/${POSTGRES_DB:-fft_sitereport}
     volumes:
       - audio_data:/data/audio
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "6011:8000"
     depends_on:

@@ -1,19 +1,23 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-from app.database import init_db
+from app.database import init_db, async_session
 from app.routers import voice, admin, options, auth
 from app.routers import employees, certificates, site_reports, signatures, snapshots, workers
+from app.services import telegram_bot
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    telegram_bot.start_bot()
     yield
+    await telegram_bot.stop_bot()
 
 
-app = FastAPI(title="FFT Site Report API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="FFT Site Report API", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,4 +42,10 @@ app.include_router(workers.router, prefix="/api/worker", tags=["workers"])
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    db_ok = True
+    try:
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception:
+        db_ok = False
+    return {"status": "ok", "database": "connected" if db_ok else "disconnected"}

@@ -25,7 +25,7 @@ from app.schemas.signature import SignatureProgressResponse, SignatureMatrixRow
 from app.schemas.site_report import MilestoneCreate, MilestoneResponse
 from app.config import settings
 from app.routers.auth import get_token_session, crew_lead_or_admin_required
-from app.services import nas_service
+from app.services import nas_service, telegram_bot
 from app.database import async_session
 
 router = APIRouter()
@@ -348,6 +348,10 @@ async def confirm_for_signing(
 
     sr.status = SiteReportStatus.READY_FOR_SIGNATURE.value
     await db.commit()
+
+    # Send Telegram notification (fire-and-forget)
+    import asyncio
+    asyncio.create_task(telegram_bot.notify_report_confirmed(str(report_id)))
 
     # Compute initial signature progress
     sigs_result = await db.execute(

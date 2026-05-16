@@ -18,6 +18,7 @@ from app.schemas.signature import (
 )
 from app.config import settings
 from app.routers.auth import get_token_session
+from app.services import telegram_bot
 
 router = APIRouter()
 
@@ -174,6 +175,9 @@ async def create_signature(data: SignatureCreate, db: AsyncSession = Depends(get
     signed_count = sum(1 for s in all_sigs if s.status == "signed")
     if signed_count >= total_needed and total_needed > 0:
         sr.status = SiteReportStatus.COMPLETED.value
+        # Fire-and-forget Telegram notification
+        import asyncio
+        asyncio.create_task(telegram_bot.notify_report_completed(str(data.site_report_id)))
     elif signed_count > 0:
         sr.status = SiteReportStatus.PENDING_SIGNATURES.value
 

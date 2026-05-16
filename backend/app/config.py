@@ -9,6 +9,14 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
     AUDIO_STORAGE_PATH: str = "/data/audio"
+    CERTIFICATE_STORAGE_PATH: str = "/data/certificates"
+    SIGNATURE_STORAGE_PATH: str = "/data/signatures"
+    SNAPSHOT_STORAGE_PATH: str = "/data/snapshots"
+
+    # Admin account
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "1q2w3e4R."
+    TOKEN_EXPIRE_SECONDS: int = 86400  # 24 hours
 
     NAS_URL: str = ""
     NAS_USERNAME: str = ""

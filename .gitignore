@@ -6,3 +6,9 @@ __pycache__/
 .venv/
 *.egg-info/
 .claude/
+.gitnexus/
+graphify-out/
+doc/
+AGENTS.md
+CLAUDE.md
+healthcheck.sh

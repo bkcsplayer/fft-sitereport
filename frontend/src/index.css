@@ -10,6 +10,8 @@
 
   html {
     overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -19,16 +21,20 @@
     overscroll-behavior: none;
     touch-action: manipulation;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   ::-webkit-scrollbar {
-    width: 3px;
+    width: 6px;
   }
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-dark-700/50 rounded-full;
+    @apply bg-dark-700/70 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-600/70;
   }
 
   /* Prevent iOS zoom on input focus — 16px minimum */

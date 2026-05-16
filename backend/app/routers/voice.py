@@ -1,6 +1,6 @@
 import uuid
 import os
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -12,6 +12,8 @@ from app.models import VoiceRecording, VoiceTranscript
 from app.config import settings
 from app.services.groq_stt import transcribe_audio
 from app.services.deepseek_summary import summarize_text
+from app.services import nas_service
+from app.routers.site_reports import _upload_to_nas_bg
 
 router = APIRouter()
 
@@ -20,7 +22,9 @@ router = APIRouter()
 async def transcribe_voice(
     audio: UploadFile = File(...),
     field_id: str = Form(default="voice_note"),
+    site_report_id: uuid.UUID | None = Form(None),
     db: AsyncSession = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     recording_id = uuid.uuid4()
     file_ext = audio.filename.split(".")[-1] if audio.filename else "webm"
@@ -34,6 +38,7 @@ async def transcribe_voice(
 
     recording = VoiceRecording(
         id=recording_id,
+        site_report_id=site_report_id,
         field_id=field_id,
         file_path=file_path,
         file_size=len(content),
@@ -41,6 +46,10 @@ async def transcribe_voice(
     )
     db.add(recording)
     await db.commit()
+
+    if site_report_id:
+        nas_filename = nas_service.generate_video_filename(f"Voice_{site_report_id}_{field_id}").replace(".mp4", f".{file_ext}")
+        background_tasks.add_task(_upload_to_nas_bg, recording_id, "audio", file_path, nas_filename)
 
     raw_text = await transcribe_audio(file_path)
 
@@ -65,7 +74,9 @@ async def transcribe_voice(
 async def transcribe_voice_stream(
     audio: UploadFile = File(...),
     field_id: str = Form(default="voice_note"),
+    site_report_id: uuid.UUID | None = Form(None),
     db: AsyncSession = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     recording_id = uuid.uuid4()
     file_ext = audio.filename.split(".")[-1] if audio.filename else "webm"
@@ -79,6 +90,7 @@ async def transcribe_voice_stream(
 
     recording = VoiceRecording(
         id=recording_id,
+        site_report_id=site_report_id,
         field_id=field_id,
         file_path=file_path,
         file_size=len(content),
@@ -86,6 +98,10 @@ async def transcribe_voice_stream(
     )
     db.add(recording)
     await db.commit()
+
+    if site_report_id:
+        nas_filename = nas_service.generate_video_filename(f"Voice_{site_report_id}_{field_id}").replace(".mp4", f".{file_ext}")
+        background_tasks.add_task(_upload_to_nas_bg, recording_id, "audio", file_path, nas_filename)
 
     async def event_generator():
         yield f"data: {json.dumps({'stage': 'uploading', 'progress': 100, 'message': '音频上传完成'})}\n\n"

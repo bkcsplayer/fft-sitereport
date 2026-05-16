@@ -6,12 +6,14 @@ import { useI18n } from "../i18n";
 
 interface VoiceRecorderProps {
   fieldId: string;
-  onTranscribed: (text: string, recordingId: string) => void;
+  siteReportId?: string;
+  onTranscribed?: (text: string, recordingId: string) => void;
+  onComplete?: () => void;
 }
 
 type Stage = "idle" | "recording" | "preview" | "uploading" | "transcribing" | "summarizing" | "done";
 
-export function VoiceRecorder({ fieldId, onTranscribed }: VoiceRecorderProps) {
+export function VoiceRecorder({ fieldId, siteReportId, onTranscribed, onComplete }: VoiceRecorderProps) {
   const { t } = useI18n();
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState(0);
@@ -147,12 +149,13 @@ export function VoiceRecorder({ fieldId, onTranscribed }: VoiceRecorderProps) {
     setProgress(10);
 
     try {
-      await api.transcribeAudioStream(blob, fieldId, (data) => {
+      await api.transcribeAudioStream(blob, fieldId, siteReportId, (data) => {
         setStage(data.stage as Stage);
         setProgress(data.progress);
 
         if (data.stage === "done") {
-          onTranscribed(data.processed_text || data.raw_text, data.recording_id);
+          onTranscribed?.(data.processed_text || data.raw_text, data.recording_id);
+          onComplete?.();
           setTimeout(() => {
             cleanupAudio();
             setStage("idle");
@@ -161,8 +164,9 @@ export function VoiceRecorder({ fieldId, onTranscribed }: VoiceRecorderProps) {
         }
       });
     } catch {
-      const result = await api.transcribeAudio(blob, fieldId);
-      onTranscribed(result.processed_text || result.raw_text, result.recording_id);
+      const result = await api.transcribeAudio(blob, fieldId, siteReportId);
+      onTranscribed?.(result.processed_text || result.raw_text, result.recording_id);
+      onComplete?.();
       cleanupAudio();
       setStage("idle");
       setProgress(0);

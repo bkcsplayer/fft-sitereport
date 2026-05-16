@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { setApiToken } from "./services/api";
 
-export type UserRole = "admin" | "user";
+export type UserRole = "admin" | "crew_lead" | "worker";
 
 interface AuthUser {
   username: string;
   role: UserRole;
   display_name: string;
   token: string;
+  employee_id: string | null;
 }
 
 interface AuthContextType {
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         validateToken(parsed.token).then((valid) => {
           if (valid) {
             setUser(parsed);
+            setApiToken(parsed.token);
           } else {
             localStorage.removeItem(STORAGE_KEY);
           }
@@ -56,7 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const validateToken = async (token: string): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_BASE}/auth/validate?token=${encodeURIComponent(token)}`);
+      const res = await fetch(`${API_BASE}/auth/validate`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) return false;
       const data = await res.json();
       return data.valid === true;
@@ -83,9 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: data.role,
         display_name: data.display_name,
         token: data.token,
+        employee_id: data.employee_id ?? null,
       };
 
       setUser(authUser);
+      setApiToken(authUser.token);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
       return { ok: true };
     } catch {
@@ -95,9 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     if (user?.token) {
-      fetch(`${API_BASE}/auth/logout?token=${encodeURIComponent(user.token)}`, { method: "POST" }).catch(() => {});
+      fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` },
+      }).catch(() => {});
     }
     setUser(null);
+    setApiToken(null);
     localStorage.removeItem(STORAGE_KEY);
   };
 

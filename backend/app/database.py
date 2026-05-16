@@ -19,5 +19,6 @@ async def get_db():
 
 async def init_db():
     async with engine.begin() as conn:
+        # Drop legacy v1 tables to ensure clean state
+        await conn.execute(text("DROP TABLE IF EXISTS attendance_records, milestones, voice_transcripts, voice_recordings, reports CASCADE"))
         await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(text("ALTER TABLE reports ADD COLUMN IF NOT EXISTS video_nas_path VARCHAR(500)"))

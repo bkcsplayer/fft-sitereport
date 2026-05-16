@@ -3,44 +3,45 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.database import get_db
-from app.models import Report, ReportStatus
-from app.schemas import AdminStats, ReportListItem
+from app.models.options import DropdownOption
+from app.models.site_report import SiteReport, SiteReportStatus as SRS
+from app.models.employee import Employee
+from app.schemas import AdminStats
+from app.routers.auth import admin_required
 
 router = APIRouter()
 
 
 @router.get("/stats", response_model=AdminStats)
-async def get_stats(db: AsyncSession = Depends(get_db)):
-    total = await db.execute(select(func.count(Report.id)))
-    completed = await db.execute(
-        select(func.count(Report.id)).where(Report.status == ReportStatus.COMPLETED.value)
+async def get_stats(db: AsyncSession = Depends(get_db), _: dict = Depends(admin_required)):
+    panels = await db.execute(select(func.coalesce(func.sum(SiteReport.installation_quantity), 0)))
+
+    total_sr = await db.execute(select(func.count(SiteReport.id)))
+    completed_sr = await db.execute(
+        select(func.count(SiteReport.id)).where(SiteReport.status == SRS.COMPLETED.value)
     )
-    draft = await db.execute(
-        select(func.count(Report.id)).where(Report.status == ReportStatus.DRAFT.value)
+    pending_sr = await db.execute(
+        select(func.count(SiteReport.id)).where(SiteReport.status.in_([
+            SRS.DRAFT.value, SRS.READY_FOR_SIGNATURE.value, SRS.PENDING_SIGNATURES.value
+        ]))
     )
-    anomaly = await db.execute(
-        select(func.count(Report.id)).where(Report.status == ReportStatus.ANOMALY.value)
+    review_sr = await db.execute(
+        select(func.count(SiteReport.id)).where(SiteReport.status == SRS.NEEDS_REVIEW.value)
     )
-    panels = await db.execute(select(func.coalesce(func.sum(Report.panels_installed_today), 0)))
-    projects = await db.execute(select(func.count(func.distinct(Report.work_address))))
+
+    sr_addrs = await db.execute(select(func.distinct(SiteReport.work_address)))
+    all_addrs = set(a[0] for a in sr_addrs.all())
+
+    employees = await db.execute(select(func.count(Employee.id)).where(Employee.is_active == True))
 
     return AdminStats(
-        total_reports=total.scalar_one(),
-        completed_reports=completed.scalar_one(),
-        pending_reports=draft.scalar_one(),
-        anomaly_reports=anomaly.scalar_one(),
+        total_reports=total_sr.scalar_one(),
+        completed_reports=completed_sr.scalar_one(),
+        pending_reports=pending_sr.scalar_one(),
+        anomaly_reports=review_sr.scalar_one(),
         total_panels_installed=panels.scalar_one(),
-        active_projects=projects.scalar_one(),
+        active_projects=len(all_addrs),
     )
 
 
-@router.get("/reports", response_model=list[ReportListItem])
-async def admin_list_reports(
-    limit: int = 50,
-    offset: int = 0,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Report).order_by(Report.created_at.desc()).limit(limit).offset(offset)
-    )
-    return result.scalars().all()
+

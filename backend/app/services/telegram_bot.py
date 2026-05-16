@@ -1,22 +1,18 @@
 import httpx
 from app.config import settings
-from app.models import Report
+from app.models.site_report import SiteReport
 
 
-async def send_report_to_telegram(report: Report) -> bool:
+async def send_report_to_telegram(report: SiteReport) -> bool:
     """Send a formatted report to Telegram."""
     if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHAT_ID:
         return False
 
-    plan_status = "✅ 是" if report.daily_plan_completed else "❌ 否"
-    if not report.daily_plan_completed and report.daily_plan_incomplete_reason:
-        plan_status += f" ({report.daily_plan_incomplete_reason})"
-
     attendance_lines = []
-    for att in report.attendance_records:
-        attendance_lines.append(
-            f"  • {att.employee_name}: {att.arrival_time.strftime('%H:%M')} - {att.departure_time.strftime('%H:%M')}"
-        )
+    for w in report.workers:
+        in_t = w.clock_in_time.strftime('%H:%M') if w.clock_in_time else "?"
+        out_t = w.clock_out_time.strftime('%H:%M') if w.clock_out_time else "?"
+        attendance_lines.append(f"  • {w.employee_name}: {in_t} - {out_t}")
     attendance_text = "\n".join(attendance_lines) if attendance_lines else "  无记录"
 
     milestone_lines = []
@@ -31,16 +27,15 @@ async def send_report_to_telegram(report: Report) -> bool:
         )
     milestones_text = "\n".join(milestone_lines) if milestone_lines else "  无记录"
 
+    crew_lead_name = next((w.employee_name for w in report.workers if w.is_crew_lead), "Unknown")
+    
     message = f"""📋 *施工日报 - Installation Report*
 ━━━━━━━━━━━━━━━━━━━━
 
 📅 日期: {report.work_date.strftime('%Y-%m-%d')}
 📍 地址: {report.work_address}
-👷 领队: {report.crew_leader_name}
-🔧 今日安装板数: {report.panels_installed_today}
-
-📊 *施工计划完成情况*
-{plan_status}
+👷 领队: {crew_lead_name}
+🔧 今日安装板数: {report.installation_quantity}
 
 👥 *员工出勤*
 {attendance_text}

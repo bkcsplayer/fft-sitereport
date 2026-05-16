@@ -1,0 +1,112 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FileText, MapPin, Calendar, ChevronRight, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { api, SiteReportListItem } from "../services/api";
+import { PageHeader } from "../components/PageHeader";
+
+const STATUS_LABELS: Record<string, { zh: string; en: string; color: string }> = {
+  draft: { zh: "草稿", en: "Draft", color: "bg-dark-500/10 text-dark-400" },
+  ready_for_signature: { zh: "待签署", en: "Ready", color: "bg-primary-500/10 text-primary-400" },
+  pending_signatures: { zh: "签署中", en: "Signing", color: "bg-amber-500/10 text-amber-400" },
+  completed: { zh: "已完成", en: "Done", color: "bg-emerald-500/10 text-emerald-400" },
+  needs_review: { zh: "需审核", en: "Review", color: "bg-red-500/10 text-red-400" },
+};
+
+export function SiteReportList() {
+  const navigate = useNavigate();
+  const [reports, setReports] = useState<SiteReportListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getSiteReports().then((data) => {
+      setReports(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="w-8 h-8 border-[2.5px] border-primary-500/20 border-t-primary-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-6 space-y-4 w-full">
+      <PageHeader title="Site Reports" subtitle="Complete safety report dossiers" />
+
+      <button
+        onClick={() => navigate("/new-report")}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600/12 border border-primary-500/25 rounded-xl text-primary-300 text-sm font-semibold active:scale-[0.97] transition-all cursor-pointer"
+      >
+        <FileText size={16} />
+        New Site Report
+      </button>
+
+      {reports.length === 0 ? (
+        <p className="text-center text-dark-500 text-sm py-10">No site reports yet</p>
+      ) : (
+        <div className="space-y-2">
+          {reports.map((r, i) => {
+            const st = STATUS_LABELS[r.status] || STATUS_LABELS.draft;
+            const sigInfo = parseSignatureProgress(r.signature_progress);
+
+            return (
+              <motion.div
+                key={r.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() => navigate(`/site-reports/${r.id}`)}
+                className="glass-card p-3.5 space-y-2 cursor-pointer card-hover"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-[10px] text-dark-500 mb-0.5">
+                      <Calendar size={10} />
+                      <span>{r.work_date}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin size={12} className="text-dark-500 flex-shrink-0" />
+                      <span className="text-sm text-dark-100 font-medium truncate">{r.work_address}</span>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${st.color}`}>
+                    {st.en}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3 text-dark-500">
+                    {r.crew_lead_name && <span>Crew: {r.crew_lead_name}</span>}
+                    {sigInfo && (
+                      <span className={sigInfo.complete ? "text-emerald-400" : "text-amber-400"}>
+                        {sigInfo.done}/{sigInfo.total} signed
+                      </span>
+                    )}
+                  </div>
+                  <ChevronRight size={14} className="text-dark-600" />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function parseSignatureProgress(raw: string | null): { total: number; done: number; complete: boolean } | null {
+  if (!raw) return null;
+  try {
+    const parts = raw.split("/");
+    if (parts.length === 2) {
+      const done = parseInt(parts[0]);
+      const total = parseInt(parts[1]);
+      return { total, done, complete: done >= total };
+    }
+  } catch {}
+  return null;
+}

@@ -13,9 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 
-# Copy PDF templates from project root doc/ directory
-COPY doc/ /doc/
-
 RUN mkdir -p /data/audio
 
 EXPOSE 8000

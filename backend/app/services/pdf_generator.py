@@ -6,10 +6,10 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
-# In Docker, templates are at /doc/. For local dev, fallback to project root doc/.
-_DOCKER_DOCS = "/doc"
-_LOCAL_DOCS = os.path.join(os.path.dirname(__file__), "..", "..", "..", "doc")
-DOCS_DIR = _DOCKER_DOCS if os.path.isdir(_DOCKER_DOCS) else _LOCAL_DOCS
+# In Docker, templates are at /app/templates/. For local dev, fallback to backend/templates/.
+_DOCKER_TEMPLATES = "/app/templates"
+_LOCAL_TEMPLATES = os.path.join(os.path.dirname(__file__), "..", "..", "templates")
+DOCS_DIR = _DOCKER_TEMPLATES if os.path.isdir(_DOCKER_TEMPLATES) else _LOCAL_TEMPLATES
 
 FPP_TEMPLATE = os.path.join(DOCS_DIR, "Fall_Protection_Plan_2Pages_ImageExact.pdf")
 HA_TEMPLATE = os.path.join(DOCS_DIR, "Hazard_Assessment_2Pages_ImageExact.pdf")

@@ -27,10 +27,21 @@ async def _send_message(chat_id: str, text: str, parse_mode: str = "Markdown") -
                 f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
                 json={"chat_id": chat_id, "text": text, "parse_mode": parse_mode},
             )
+            if resp.status_code != 200:
+                body = resp.text
+                print(f"[Telegram] sendMessage HTTP {resp.status_code}: {body[:300]}")
             return resp.status_code == 200
         except Exception as e:
             print(f"[Telegram] sendMessage error: {e}")
             return False
+
+
+def _escape_md(text: str) -> str:
+    """Escape MarkdownV2 special characters except those we intentionally use."""
+    escape_chars = r"_*[]()~`>#+-=|{}.!"
+    for ch in escape_chars:
+        text = text.replace(ch, "\\" + ch)
+    return text
 
 
 def _b2s(v: bool | None) -> str:

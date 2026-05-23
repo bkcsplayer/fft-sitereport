@@ -324,8 +324,8 @@ export function SiteReportDetail() {
         </button>
       )}
 
-      {/* Post-Work Section */}
-      {report.status === "completed" && isCrewLeadOrAdmin && (
+      {/* Post-Work Section — visible once confirmed (not draft) */}
+      {report.status !== "draft" && isCrewLeadOrAdmin && (
         <PostWorkSection report={report} onUpdate={load} />
       )}
 
@@ -360,6 +360,9 @@ function PostWorkSection({ report, onUpdate }: { report: SiteReportDetailType; o
   const [asExpected, setAsExpected] = useState(true);
   const [delayReason, setDelayReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingTimes, setSavingTimes] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(report.status === "completed");
 
   const addMilestone = async () => {
     if (!milestoneType || !estTime || !actTime) return;
@@ -392,10 +395,74 @@ function PostWorkSection({ report, onUpdate }: { report: SiteReportDetailType; o
     } catch {}
   };
 
+  const updateWorkerTime = async (workerAssignmentId: string, field: "clock_in_time" | "clock_out_time", value: string | null) => {
+    setSavingTimes((prev) => ({ ...prev, [workerAssignmentId + field]: true }));
+    try {
+      await api.updateWorkerTimes(
+        report.id,
+        workerAssignmentId,
+        field === "clock_in_time" ? value : null,
+        field === "clock_out_time" ? value : null,
+      );
+      onUpdate();
+    } catch {
+      alert("Failed to update time");
+    }
+    setSavingTimes((prev) => ({ ...prev, [workerAssignmentId + field]: false }));
+  };
+
+  const formatTime = (t: string | null) => {
+    if (!t) return "--:--";
+    try {
+      const d = new Date(t);
+      if (isNaN(d.getTime())) return t.slice(11, 16);
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "--:--";
+    }
+  };
+
   return (
     <div className="space-y-4 pt-4 border-t border-dark-700/50">
       <h2 className="text-sm font-bold text-white">Post-Work Documentation</h2>
-      <p className="text-xs text-dark-400">Record your milestones and final voice summary.</p>
+      <p className="text-xs text-dark-400">Record milestones, crew times, and voice summary.</p>
+
+      {/* Worker Clock In/Out Times */}
+      {report.workers.length > 0 && (
+        <div className="glass-card p-4 space-y-3">
+          <h3 className="text-xs font-semibold text-white flex items-center gap-2">
+            <Clock size={14} className="text-dark-500" />
+            Crew Time Tracking
+          </h3>
+          <div className="space-y-2">
+            {report.workers.map((w) => (
+              <div key={w.id} className="flex items-center gap-2 text-xs bg-dark-800/30 rounded-lg p-2">
+                <span className="w-24 text-dark-200 truncate">{w.employee_name}{w.is_crew_lead ? " (L)" : ""}</span>
+                <div className="flex-1 flex items-center gap-1">
+                  <span className="text-dark-500 w-8 shrink-0">In:</span>
+                  <input
+                    type="time"
+                    value={w.clock_in_time ? (w.clock_in_time.slice(11, 16)) : ""}
+                    onChange={(e) => updateWorkerTime(w.id, "clock_in_time", e.target.value ? new Date(`2000-01-01T${e.target.value}:00`).toISOString() : null)}
+                    className="bg-dark-900 border border-dark-600/50 rounded px-1.5 py-0.5 text-dark-200 w-28 text-[11px]"
+                  />
+                  {savingTimes[w.id + "clock_in_time"] && <span className="text-dark-500 text-[10px]">...</span>}
+                </div>
+                <div className="flex-1 flex items-center gap-1">
+                  <span className="text-dark-500 w-8 shrink-0">Out:</span>
+                  <input
+                    type="time"
+                    value={w.clock_out_time ? (w.clock_out_time.slice(11, 16)) : ""}
+                    onChange={(e) => updateWorkerTime(w.id, "clock_out_time", e.target.value ? new Date(`2000-01-01T${e.target.value}:00`).toISOString() : null)}
+                    className="bg-dark-900 border border-dark-600/50 rounded px-1.5 py-0.5 text-dark-200 w-28 text-[11px]"
+                  />
+                  {savingTimes[w.id + "clock_out_time"] && <span className="text-dark-500 text-[10px]">...</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Milestones List */}
       <div className="space-y-2">
@@ -442,6 +509,50 @@ function PostWorkSection({ report, onUpdate }: { report: SiteReportDetailType; o
         <h3 className="text-xs font-semibold text-white">Voice Summary</h3>
         <VoiceRecorder fieldId="summary" siteReportId={report.id} onComplete={onUpdate} />
       </div>
+
+      {/* Submit Report */}
+      {!submitted ? (
+        <div className="glass-card p-4 border border-emerald-500/30 bg-emerald-500/5">
+          <div className="text-center space-y-3">
+            <div className="flex items-center gap-2 justify-center">
+              <CheckCircle2 size={18} className="text-emerald-400" />
+              <h3 className="text-sm font-bold text-white">Ready to Submit?</h3>
+            </div>
+            <p className="text-xs text-dark-400">
+              This will send the complete report detail to Telegram for record-keeping.
+            </p>
+            <button
+              onClick={async () => {
+                setSubmitting(true);
+                try {
+                  const result = await api.submitReport(report.id);
+                  setSubmitted(true);
+                  onUpdate();
+                } catch (e: any) {
+                  alert(e.message || "Submit failed");
+                }
+                setSubmitting(false);
+              }}
+              disabled={submitting}
+              className="w-full btn-primary py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {submitting ? (
+                <><Clock size={16} className="animate-spin" /> Submitting...</>
+              ) : (
+                <><Send size={16} /> Submit Report to Telegram</>
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="glass-card p-4 border border-emerald-500/20 bg-emerald-500/5 text-center">
+          <div className="flex items-center gap-2 justify-center mb-1">
+            <CheckCircle2 size={16} className="text-emerald-400" />
+            <span className="text-sm font-bold text-emerald-400">Report Submitted</span>
+          </div>
+          <p className="text-xs text-dark-400">The full report detail has been sent to Telegram.</p>
+        </div>
+      )}
     </div>
   );
 }

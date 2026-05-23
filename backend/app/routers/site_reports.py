@@ -1,5 +1,6 @@
 import uuid
 import os
+import asyncio
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -15,7 +16,7 @@ from app.models.safety import FallProtectionPlan, HazardAssessment
 from app.models.media import VideoFile, AudioFile
 from app.schemas.site_report import (
     SiteReportCreate, SiteReportUpdate, SiteReportResponse, SiteReportListItem,
-    SiteReportWorkerResponse, UpdateWorkersRequest,
+    SiteReportWorkerResponse, UpdateWorkersRequest, UpdateWorkerTimesRequest,
 )
 from app.schemas.safety import (
     FallProtectionPlanCreate, FallProtectionPlanResponse,
@@ -350,7 +351,6 @@ async def confirm_for_signing(
     await db.commit()
 
     # Send Telegram notification (fire-and-forget)
-    import asyncio
     asyncio.create_task(telegram_bot.notify_report_confirmed(str(report_id)))
 
     # Compute initial signature progress
@@ -383,6 +383,32 @@ async def confirm_for_signing(
             "matrix": [r.model_dump(mode='json') for r in matrix_rows],
         },
     }
+
+
+@router.post("/{report_id}/submit")
+async def submit_report(
+    report_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    session: dict = Depends(crew_lead_or_admin_required),
+):
+    """Submit completed Post-Work report and send full detail to Telegram."""
+    result = await db.execute(
+        select(SiteReport).where(SiteReport.id == report_id)
+    )
+    sr = result.scalar_one_or_none()
+    if not sr:
+        raise HTTPException(status_code=404, detail="Site report not found")
+
+    if sr.status == SiteReportStatus.DRAFT.value:
+        raise HTTPException(status_code=400, detail="Please confirm and send to workers first")
+
+    if sr.status != SiteReportStatus.COMPLETED.value:
+        sr.status = SiteReportStatus.COMPLETED.value
+        await db.commit()
+
+    asyncio.create_task(telegram_bot.notify_report_submitted(str(report_id)))
+
+    return {"status": "submitted", "report_status": sr.status}
 
 
 # ─── Video Upload ────────────────────────────────────────
@@ -688,3 +714,30 @@ async def update_workers(
 
     await db.commit()
     return {"status": "ok", "worker_count": len(body.worker_ids)}
+
+
+@router.put("/{report_id}/workers/{worker_id}/times")
+async def update_worker_times(
+    report_id: uuid.UUID,
+    worker_id: uuid.UUID,
+    body: UpdateWorkerTimesRequest,
+    db: AsyncSession = Depends(get_db),
+    session: dict = Depends(crew_lead_or_admin_required),
+):
+    result = await db.execute(
+        select(SiteReportWorker).where(
+            SiteReportWorker.site_report_id == report_id,
+            SiteReportWorker.id == worker_id,
+        )
+    )
+    sw = result.scalar_one_or_none()
+    if not sw:
+        raise HTTPException(status_code=404, detail="Worker assignment not found")
+
+    if body.clock_in_time is not None:
+        sw.clock_in_time = body.clock_in_time
+    if body.clock_out_time is not None:
+        sw.clock_out_time = body.clock_out_time
+
+    await db.commit()
+    return {"status": "ok"}

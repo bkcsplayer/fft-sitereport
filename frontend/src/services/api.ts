@@ -617,10 +617,31 @@ export const api = {
     return res.json();
   },
 
+  async submitReport(reportId: string): Promise<{ status: string; report_status: string }> {
+    const res = await fetch(`${BASE_URL}/site-reports/${reportId}/submit`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Submit failed");
+    }
+    return res.json();
+  },
+
   async deleteMilestone(reportId: string, milestoneId: string): Promise<void> {
     await fetch(`${BASE_URL}/site-reports/${reportId}/milestones/${milestoneId}`, {
       method: "DELETE",
       headers: authHeaders(),
     });
+  },
+
+  async updateWorkerTimes(reportId: string, workerAssignmentId: string, clockInTime: string | null, clockOutTime: string | null): Promise<void> {
+    const res = await fetch(`${BASE_URL}/site-reports/${reportId}/workers/${workerAssignmentId}/times`, {
+      method: "PUT",
+      headers: jsonHeaders(),
+      body: JSON.stringify({ clock_in_time: clockInTime, clock_out_time: clockOutTime }),
+    });
+    if (!res.ok) throw new Error("Update failed");
   },
 };

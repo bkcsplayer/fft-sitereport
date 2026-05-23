@@ -322,3 +322,148 @@ async def notify_report_completed(report_id: str) -> bool:
     else:
         print(f"[Telegram] FAILED to send report completed — {report_id}")
     return ok
+
+
+async def notify_report_submitted(report_id: str) -> bool:
+    """Notify channel with FULL report detail after Post-Work submission."""
+    if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHAT_ID:
+        return False
+
+    from app.models.site_report import SiteReport, Milestone, VoiceRecording, VoiceTranscript
+    from app.models.safety import FallProtectionPlan, HazardAssessment
+    from sqlalchemy.orm import selectinload
+
+    async with async_session() as session:
+        result = await session.execute(
+            select(SiteReport)
+            .options(
+                selectinload(SiteReport.workers),
+                selectinload(SiteReport.signatures),
+                selectinload(SiteReport.milestones),
+                selectinload(SiteReport.fall_protection_plan),
+                selectinload(SiteReport.hazard_assessment),
+            )
+            .where(SiteReport.id == report_id)
+        )
+        sr = result.scalar_one_or_none()
+        if not sr:
+            return False
+
+        workers = sr.workers or []
+        sigs = sr.signatures or []
+        milestones = sr.milestones or []
+        fpp = sr.fall_protection_plan
+        ha = sr.hazard_assessment
+
+        crew_lead = next((w.employee_name for w in workers if w.is_crew_lead), "Unknown")
+        signed_count = sum(1 for s in sigs if s.status == "signed")
+        total_sigs = len(workers) * 2 if workers else 0
+
+        status_emoji = {
+            "draft": "\U0001f4dd",
+            "ready_for_signature": "✍️",
+            "pending_signatures": "\U0001f58a",
+            "completed": "✅",
+            "needs_review": "⚠️",
+        }.get(sr.status, "\U0001f4cb")
+
+        lines = [
+            "\U0001f4cb *Report Submitted — Full Detail*",
+            "━" * 20,
+            "",
+            "\U0001f4c5 *Basic Info*",
+            f"  Date: {sr.work_date}",
+            f"  Address: {sr.work_address}",
+            f"  Employer: {sr.employer}",
+            f"  Panels: {sr.installation_quantity}",
+            f"  Status: {status_emoji} {sr.status.upper()}",
+            "",
+        ]
+
+        # Workers with clock times
+        lines.append("\U0001f465 *Crew ({})*".format(len(workers)))
+        for w in workers:
+            lead_tag = " (Crew Lead)" if w.is_crew_lead else ""
+            ci = _fmt_dt(w.clock_in_time)
+            co = _fmt_dt(w.clock_out_time)
+            lines.append(f"  • {w.employee_name}{lead_tag}")
+            if ci or co:
+                lines.append(f"    ⏱ In: {ci} | Out: {co}")
+        lines.append("")
+
+        # FPP summary
+        if fpp:
+            lines.append("\U0001f6e1 *Fall Protection Plan*")
+            lines.append(f"  Anchor: {fpp.anchor_type or '-'} x{fpp.anchor_count or 0}")
+            if fpp.fall_hazards:
+                lines.append(f"  Hazards: {fpp.fall_hazards[:120]}")
+            if fpp.clearance_f_total is not None:
+                lines.append(f"  Clearance: {fpp.clearance_f_total} ft (A+B+C+D+E)")
+            lines.append("")
+
+        # HA summary
+        if ha:
+            items = ha.hazard_items or []
+            lines.append("⚠️ *Hazard Assessment*")
+            lines.append(f"  Reviewed: {_b2s(ha.all_hazards_reviewed)}")
+            lines.append(f"  Hazards identified: {len(items)}")
+            for item in items[:5]:
+                if isinstance(item, dict):
+                    lines.append(f"  • {item.get('hazard', '?')[:80]}")
+            lines.append("")
+
+        # Signatures
+        if sigs:
+            lines.append("✍️ *Signatures* ({}/{})".format(signed_count, total_sigs))
+            for s in sigs:
+                status_icon = "✅" if s.status == "signed" else "⬜"
+                doc = "FPP" if "fpp" in s.document_type.lower() else "HA"
+                lines.append(f"  {status_icon} {s.worker_name} — {doc}")
+            lines.append("")
+
+        # Milestones
+        if milestones:
+            lines.append("\U0001f4ca *Milestones*")
+            for m in milestones:
+                et = m.estimated_completion_time.strftime("%H:%M") if m.estimated_completion_time else "--:--"
+                at = m.actual_completion_time.strftime("%H:%M") if m.actual_completion_time else "--:--"
+                flag = "✅" if m.completed_as_expected else f"⚠️ Delayed: {m.delay_reason or '-'}"
+                lines.append(f"  • {m.milestone_type}")
+                lines.append(f"    Est: {et} | Act: {at} | {flag}")
+            lines.append("")
+
+        # Voice recordings
+        voice_result = await session.execute(
+            select(VoiceRecording).where(VoiceRecording.site_report_id == report_id)
+            .options(selectinload(VoiceRecording.transcript))
+        )
+        recordings = voice_result.scalars().all()
+        if recordings:
+            lines.append("\U0001f399 *Voice Summaries*")
+            for vr in recordings:
+                dur = f"{vr.duration_seconds:.0f}s" if vr.duration_seconds else "?"
+                text = vr.transcript.processed_text if vr.transcript else None
+                snippet = (text[:120] + "...") if text and len(text) > 120 else (text or "(no transcript)")
+                lines.append(f"  • [{dur}] {snippet}")
+            lines.append("")
+
+        lines.extend([
+            "━" * 20,
+            f"\U0001f4c5 Submitted at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}",
+        ])
+
+    message = "\n".join(lines)
+    ok = await _send_message(settings.TELEGRAM_CHAT_ID, message)
+    if ok:
+        print(f"[Telegram] Sent: report submitted — {report_id}")
+    else:
+        print(f"[Telegram] FAILED to send report submitted — {report_id}")
+    return ok
+
+
+def _fmt_dt(v) -> str:
+    if v is None:
+        return "-"
+    if isinstance(v, datetime):
+        return v.strftime("%H:%M")
+    return str(v)[:5]

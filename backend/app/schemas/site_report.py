@@ -16,6 +16,8 @@ class SiteReportWorkerResponse(BaseModel):
     employee_id: UUID
     employee_name: str
     is_crew_lead: bool
+    clock_in_time: Optional[datetime] = None
+    clock_out_time: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -75,6 +77,11 @@ class SiteReportListItem(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UpdateWorkerTimesRequest(BaseModel):
+    clock_in_time: Optional[datetime] = None
+    clock_out_time: Optional[datetime] = None
 
 
 class MilestoneCreate(BaseModel):

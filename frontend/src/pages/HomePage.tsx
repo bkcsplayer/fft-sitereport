@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FileText, MapPin, Calendar, ChevronRight, Clock, Shield, AlertTriangle } from "lucide-react";
 import { api, SiteReportListItem, WorkerAssignment } from "../services/api";
 import { PageHeader } from "../components/PageHeader";
+import { WeatherWidget } from "../components/WeatherWidget";
 import { useAuth } from "../auth";
 
 const STATUS_LABELS: Record<string, { en: string; color: string }> = {
@@ -39,6 +40,8 @@ export function HomePage() {
     <div className="px-4 py-6 space-y-4 w-full">
       <PageHeader title="Site Reports" subtitle="Safety report dossiers" />
 
+      {/* ─── Weather ─────────────────────────────────── */}
+      <WeatherWidget />
 
       {/* ─── Report List ─────────────────────────────── */}
       <div>

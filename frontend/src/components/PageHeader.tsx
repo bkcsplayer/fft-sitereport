@@ -17,7 +17,7 @@ export function PageHeader({ title, subtitle }: PageHeaderProps) {
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative flex flex-col items-center gap-2.5 mb-6"
+      className="relative flex flex-col items-center gap-1.5 mb-3"
     >
       {/* Top bar: logout left, language right */}
       <div className="absolute -top-1 left-0 right-0 flex items-center justify-between">
@@ -45,22 +45,22 @@ export function PageHeader({ title, subtitle }: PageHeaderProps) {
         </button>
       </div>
 
-      <div className="relative mt-8">
-        <div className="absolute inset-0 bg-primary-500/10 blur-xl rounded-full" />
+      <div className="relative mt-6">
+        <div className="absolute inset-0 bg-primary-500/10 blur-lg rounded-full" />
         <img
           src="/logo.png"
           alt="FFT"
-          className="relative w-11 h-11 object-contain drop-shadow-lg"
+          className="relative w-8 h-8 object-contain drop-shadow-lg"
         />
       </div>
 
       <div className="text-center">
-        <h1 className="text-[22px] font-bold tracking-tight">
+        <h1 className="text-lg font-bold tracking-tight">
           <span className="bg-gradient-to-r from-primary-200 via-primary-400 to-primary-500 bg-clip-text text-transparent">
             {title}
           </span>
         </h1>
-        <p className="text-[13px] text-dark-500 mt-1 leading-relaxed">
+        <p className="text-[11px] text-dark-500 mt-0.5 leading-relaxed">
           {subtitle}
         </p>
       </div>
